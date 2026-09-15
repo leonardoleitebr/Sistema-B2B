@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema B2B - Gestao de Usuarios e Acesso</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Sistema B2B - Distribuidora de Bebidas</h1>
+        <p id="subtituloHeader">Sprint 2 &mdash; RF02: Autenticacao e controle de acesso por perfil</p>
+    </header>
+
+    <main>
+
+        <!-- ==================== TELA DE LOGIN ==================== -->
+        <section id="secaoLogin" class="card">
+            <h2>Entrar no sistema</h2>
+
+            <form id="formLogin">
+                <label for="loginEmail">E-mail</label>
+                <input type="email" id="loginEmail" required>
+
+                <label for="loginSenha">Senha</label>
+                <input type="password" id="loginSenha" required>
+
+                <button type="submit">Entrar</button>
+            </form>
+
+            <p id="mensagemLogin" class="mensagem"></p>
+
+            <p class="ajuda">
+                Usuario de teste criado automaticamente pelo backend:<br>
+                <strong>admin@b2b.com.br</strong> / <strong>admin123</strong> (perfil Administrador)
+            </p>
+
+            <p class="ajuda">
+                <a href="#" id="linkEsqueciSenha">Esqueci minha senha</a>
+            </p>
+        </section>
+
+        <!-- ==================== REDEFINIR SENHA ==================== -->
+        <section id="secaoRedefinirSenha" class="card" style="display:none;">
+            <h2>Redefinir senha</h2>
+
+            <!-- Passo 1: usuario informa o e-mail e recebe um codigo -->
+            <div id="passoSolicitarCodigo">
+                <p class="ajuda">
+                    Informe o e-mail cadastrado pelo Administrador. Se ele estiver ativo,
+                    enviaremos um codigo de redefinicao por e-mail.
+                </p>
+                <form id="formSolicitarCodigo">
+                    <label for="emailRedefinicao">E-mail</label>
+                    <input type="email" id="emailRedefinicao" required>
+
+                    <button type="submit">Enviar codigo por e-mail</button>
+                </form>
+            </div>
+
+            <!-- Passo 2: usuario informa o codigo recebido e escolhe a nova senha -->
+            <div id="passoDefinirNovaSenha" style="display:none;">
+                <p class="ajuda">
+                    Confira seu e-mail e informe o codigo recebido junto com a nova senha
+                    (a sua escolha).
+                </p>
+                <form id="formDefinirNovaSenha">
+                    <label for="codigoRedefinicao">Codigo recebido por e-mail</label>
+                    <input type="text" id="codigoRedefinicao" required>
+
+                    <label for="novaSenhaRedefinicao">Nova senha</label>
+                    <input type="password" id="novaSenhaRedefinicao" required>
+
+                    <button type="submit">Redefinir senha</button>
+                </form>
+            </div>
+
+            <p id="mensagemRedefinirSenha" class="mensagem"></p>
+
+            <p class="ajuda">
+                <a href="#" id="linkVoltarLogin">Voltar para o login</a>
+            </p>
+        </section>
+
+        <!-- ==================== AREA LOGADA ==================== -->
+        <div id="areaLogada" style="display:none;">
+
+            <section class="card barra-usuario">
+                <div>
+                    Logado como <strong id="nomeUsuarioLogado"></strong>
+                    &mdash; perfil <strong id="perfilUsuarioLogado"></strong>
+                </div>
+                <button id="btnSair">Sair</button>
+            </section>
+
+            <!-- ============ PAINEL DO ADMINISTRADOR (gestao de usuarios) ============ -->
+            <div id="painelAdmin" style="display:none;">
+
+                <section class="card">
+                    <h2 id="tituloFormulario">Cadastrar usuario</h2>
+                    <p class="ajuda">Todo novo usuario e cadastrado inativo por padrao. Um administrador precisa ativa-lo na tabela abaixo antes que ele consiga acessar o sistema.</p>
+
+                    <form id="formUsuario">
+                        <input type="hidden" id="usuarioId">
+
+                        <label for="nome">Nome</label>
+                        <input type="text" id="nome" required>
+
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" required>
+
+                        <label for="senha">Senha</label>
+                        <input type="password" id="senha" placeholder="Obrigatorio no cadastro">
+
+                        <label for="perfil">Perfil de acesso</label>
+                        <select id="perfil" required>
+                            <option value="">Selecione...</option>
+                            <!-- preenchido dinamicamente via JavaScript (GET /api/roles) -->
+                        </select>
+
+                        <div class="botoes">
+                            <button type="submit" id="btnSalvar">Salvar</button>
+                            <button type="button" id="btnCancelar" style="display:none;">Cancelar edicao</button>
+                        </div>
+                    </form>
+
+                    <p id="mensagemFormulario" class="mensagem"></p>
+                </section>
+
+                <section class="card">
+                    <h2>Usuarios cadastrados</h2>
+                    <table id="tabelaUsuarios">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>E-mail</th>
+                                <th>Perfil</th>
+                                <th>Status</th>
+                                <th>Acoes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- preenchido via JavaScript -->
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+
+            <!-- ============ PAINEL DOS DEMAIS PERFIS ============ -->
+            <div id="painelNaoAdmin" style="display:none;">
+                <section class="card">
+                    <h2>Painel do usuario</h2>
+                    <p>
+                        Bem-vindo! Seu perfil ainda nao possui telas proprias nesta sprint
+                        &mdash; elas serao implementadas nas proximas sprints, conforme os
+                        demais requisitos (RF03 em diante).
+                    </p>
+                    <p class="ajuda">
+                        A "Gestao de usuarios" e restrita ao perfil Administrador. O botao
+                        abaixo tenta acessar essa area mesmo assim, so para demonstrar que o
+                        backend bloqueia o acesso de quem nao tem permissao
+                        (criterio de aceite 2 do RF02).
+                    </p>
+                    <button id="btnTestarAcessoRestrito">Testar acesso a "Gestao de usuarios"</button>
+                    <p id="mensagemTesteAcesso" class="mensagem"></p>
+                </section>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

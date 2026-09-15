@@ -1,0 +1,167 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f2f4f7;
+    margin: 0;
+    color: #222;
+}
+
+header {
+    background-color: #1e3a5f;
+    color: #fff;
+    padding: 20px 30px;
+}
+
+header h1 {
+    margin: 0 0 5px 0;
+    font-size: 22px;
+}
+
+header p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.85;
+}
+
+main {
+    max-width: 900px;
+    margin: 25px auto;
+    padding: 0 15px;
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 6px;
+    padding: 20px 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #1e3a5f;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+}
+
+label {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: -6px;
+}
+
+input, select {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.botoes {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+button {
+    background-color: #1e3a5f;
+    color: #fff;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button:hover {
+    background-color: #16496b;
+}
+
+#btnCancelar {
+    background-color: #888;
+}
+
+#btnCancelar:hover {
+    background-color: #666;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e2e2e2;
+    font-size: 14px;
+}
+
+th {
+    background-color: #f6f7f9;
+}
+
+.status-ativo {
+    color: #1a7a30;
+    font-weight: bold;
+}
+
+.status-inativo {
+    color: #b02a2a;
+    font-weight: bold;
+}
+
+.acoes button {
+    font-size: 12px;
+    padding: 5px 8px;
+    margin-right: 5px;
+}
+
+.mensagem {
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.mensagem.sucesso {
+    color: #1a7a30;
+}
+
+.mensagem.erro {
+    color: #b02a2a;
+}
+
+.ajuda {
+    font-size: 13px;
+    color: #555;
+}
+
+.ajuda a {
+    color: #1e3a5f;
+    font-weight: bold;
+}
+
+.barra-usuario {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 25px;
+}
+
+.barra-usuario #btnSair {
+    background-color: #888;
+}
+
+.barra-usuario #btnSair:hover {
+    background-color: #666;
+}
