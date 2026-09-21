@@ -27,7 +27,7 @@ header p {
 }
 
 main {
-    max-width: 900px;
+    max-width: 1100px;
     margin: 25px auto;
     padding: 0 15px;
 }
@@ -164,4 +164,221 @@ th {
 
 .barra-usuario #btnSair:hover {
     background-color: #666;
+}
+
+/* ==================== NAVEGACAO PRINCIPAL ==================== */
+
+.nav-principal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.nav-btn {
+    background-color: #fff;
+    color: #1e3a5f;
+    border: 1px solid #cfd8e3;
+    font-weight: bold;
+}
+
+.nav-btn:hover {
+    background-color: #e8edf3;
+}
+
+.nav-btn.ativo {
+    background-color: #1e3a5f;
+    color: #fff;
+}
+
+.secao-conteudo {
+    animation: aparecer 0.15s ease-in;
+}
+
+@keyframes aparecer {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ==================== TABELAS COM MUITAS COLUNAS ==================== */
+
+.tabela-scroll {
+    overflow-x: auto;
+}
+
+/* ==================== FORMULARIOS - EXTRAS ==================== */
+
+.checkbox-linha {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+}
+
+.checkbox-linha input {
+    width: auto;
+}
+
+/* ==================== CATALOGO / CARRINHO (cartoes de produto) ==================== */
+
+.lista-cartoes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.cartao-produto {
+    border: 1px solid #e2e2e2;
+    border-radius: 6px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cartao-produto h3 {
+    margin: 0 0 2px 0;
+    font-size: 15px;
+    color: #1e3a5f;
+}
+
+.cartao-categoria {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.cartao-preco {
+    margin: 4px 0 0 0;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.cartao-disponibilidade {
+    margin: 0;
+    font-size: 12px;
+    color: #555;
+}
+
+.cartao-acoes {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.input-quantidade {
+    width: 65px;
+}
+
+.etiqueta-preco, .etiqueta-alerta, .etiqueta-status {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background-color: #eaf2ff;
+    color: #1e3a5f;
+}
+
+.etiqueta-alerta {
+    background-color: #fdece9;
+    color: #b02a2a;
+}
+
+/* ==================== FILTROS (status de pedido / periodo do dashboard) ==================== */
+
+.filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.filtro-btn {
+    background-color: #eef1f5;
+    color: #1e3a5f;
+    font-size: 13px;
+    padding: 7px 12px;
+}
+
+.filtro-btn:hover {
+    background-color: #dfe5ec;
+}
+
+.filtro-btn.ativo {
+    background-color: #1e3a5f;
+    color: #fff;
+}
+
+.filtro-personalizado {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 6px;
+}
+
+.filtro-personalizado input {
+    padding: 6px 8px;
+}
+
+/* ==================== DASHBOARD ==================== */
+
+.cartoes-indicadores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 14px;
+}
+
+.indicador {
+    background-color: #f6f7f9;
+    border-radius: 6px;
+    padding: 16px 20px;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.indicador-valor {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1e3a5f;
+}
+
+.indicador-label {
+    font-size: 12px;
+    color: #555;
+}
+
+/* ==================== RESPONSIVIDADE (RNF04) ==================== */
+
+@media (max-width: 600px) {
+    header {
+        padding: 16px 18px;
+    }
+
+    main {
+        margin: 15px auto;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
+    form {
+        max-width: 100%;
+    }
+
+    .barra-usuario {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .lista-cartoes {
+        grid-template-columns: 1fr;
+    }
 }

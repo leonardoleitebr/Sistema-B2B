@@ -54,13 +54,13 @@ public class UsuarioController {
 
     @PostMapping
     public ResponseEntity<UsuarioResponseDTO> cadastrar(@RequestBody UsuarioRequestDTO dto) {
-        Usuario salvo = usuarioService.cadastrar(dto.paraEntidade());
+        Usuario salvo = usuarioService.cadastrar(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(new UsuarioResponseDTO(salvo));
     }
 
     @PutMapping("/{id}")
     public UsuarioResponseDTO atualizar(@PathVariable Long id, @RequestBody UsuarioRequestDTO dto) {
-        Usuario atualizado = usuarioService.atualizar(id, dto.paraEntidade());
+        Usuario atualizado = usuarioService.atualizar(id, dto);
         return new UsuarioResponseDTO(atualizado);
     }
 

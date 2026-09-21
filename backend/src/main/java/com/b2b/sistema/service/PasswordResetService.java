@@ -75,6 +75,8 @@ public class PasswordResetService {
             try {
                 emailService.enviarEmailSimples(usuario.getEmail(), "Redefinicao de senha - Sistema B2B", corpo);
             } catch (Exception e) {
+                e.printStackTrace();
+
                 // Nao deixamos o erro de envio (ex.: configuracao de SMTP)
                 // virar um 500 cru para o frontend; convertemos numa
                 // mensagem de negocio tratavel pelo GlobalExceptionHandler.

@@ -2,14 +2,15 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema B2B - Gestao de Usuarios e Acesso</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema B2B - Distribuidora de Bebidas</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
         <h1>Sistema B2B - Distribuidora de Bebidas</h1>
-        <p id="subtituloHeader">Sprint 2 &mdash; RF02: Autenticacao e controle de acesso por perfil</p>
+        <p id="subtituloHeader">Cadastros, catalogo, pedidos e expedicao em um so lugar</p>
     </header>
 
     <main>
@@ -31,8 +32,11 @@
             <p id="mensagemLogin" class="mensagem"></p>
 
             <p class="ajuda">
-                Usuario de teste criado automaticamente pelo backend:<br>
-                <strong>admin@b2b.com.br</strong> / <strong>admin123</strong> (perfil Administrador)
+                Usuarios de teste criados automaticamente pelo backend:<br>
+                <strong>admin@b2b.com.br</strong> / <strong>admin123</strong> (Administrador)<br>
+                <strong>vendedor@b2b.com.br</strong> / <strong>vendedor123</strong> (Vendedor)<br>
+                <strong>cliente@b2b.com.br</strong> / <strong>cliente123</strong> (Cliente)<br>
+                <strong>expedicao@b2b.com.br</strong> / <strong>expedicao123</strong> (Expedicao)
             </p>
 
             <p class="ajuda">
@@ -44,7 +48,6 @@
         <section id="secaoRedefinirSenha" class="card" style="display:none;">
             <h2>Redefinir senha</h2>
 
-            <!-- Passo 1: usuario informa o e-mail e recebe um codigo -->
             <div id="passoSolicitarCodigo">
                 <p class="ajuda">
                     Informe o e-mail cadastrado pelo Administrador. Se ele estiver ativo,
@@ -54,11 +57,10 @@
                     <label for="emailRedefinicao">E-mail</label>
                     <input type="email" id="emailRedefinicao" required>
 
-                    <button type="submit">Enviar codigo por e-mail</button>
+                    <button type="submit" id="btnEnviarCodigo">Enviar codigo por e-mail</button>
                 </form>
             </div>
 
-            <!-- Passo 2: usuario informa o codigo recebido e escolhe a nova senha -->
             <div id="passoDefinirNovaSenha" style="display:none;">
                 <p class="ajuda">
                     Confira seu e-mail e informe o codigo recebido junto com a nova senha
@@ -71,7 +73,10 @@
                     <label for="novaSenhaRedefinicao">Nova senha</label>
                     <input type="password" id="novaSenhaRedefinicao" required>
 
-                    <button type="submit">Redefinir senha</button>
+                    <label for="confirmarNovaSenhaRedefinicao">Confirmar nova senha</label>
+                    <input type="password" id="confirmarNovaSenhaRedefinicao" required>
+
+                    <button type="submit" id="btnRedefinirSenha">Redefinir senha</button>
                 </form>
             </div>
 
@@ -93,9 +98,19 @@
                 <button id="btnSair">Sair</button>
             </section>
 
-            <!-- ============ PAINEL DO ADMINISTRADOR (gestao de usuarios) ============ -->
-            <div id="painelAdmin" style="display:none;">
+            <!-- ============ NAVEGACAO (os botoes visiveis mudam conforme o perfil) ============ -->
+            <nav class="nav-principal" id="navPrincipal">
+                <button type="button" class="nav-btn" data-secao="secaoUsuarios" id="navUsuarios">Usuarios</button>
+                <button type="button" class="nav-btn" data-secao="secaoCategorias" id="navCategorias">Categorias</button>
+                <button type="button" class="nav-btn" data-secao="secaoProdutos" id="navProdutos">Produtos</button>
+                <button type="button" class="nav-btn" data-secao="secaoTabelasPrecos" id="navTabelasPrecos">Tabelas de Precos</button>
+                <button type="button" class="nav-btn" data-secao="secaoCatalogo" id="navCatalogo">Catalogo</button>
+                <button type="button" class="nav-btn" data-secao="secaoPedidos" id="navPedidos">Pedidos</button>
+                <button type="button" class="nav-btn" data-secao="secaoDashboard" id="navDashboard">Dashboard</button>
+            </nav>
 
+            <!-- ============ USUARIOS (RF01) - somente Admin ============ -->
+            <div id="secaoUsuarios" class="secao-conteudo" style="display:none;">
                 <section class="card">
                     <h2 id="tituloFormulario">Cadastrar usuario</h2>
                     <p class="ajuda">Todo novo usuario e cadastrado inativo por padrao. Um administrador precisa ativa-lo na tabela abaixo antes que ele consiga acessar o sistema.</p>
@@ -115,8 +130,24 @@
                         <label for="perfil">Perfil de acesso</label>
                         <select id="perfil" required>
                             <option value="">Selecione...</option>
-                            <!-- preenchido dinamicamente via JavaScript (GET /api/roles) -->
                         </select>
+
+                        <div id="camposCliente" style="display:none;">
+                            <label for="campoTabelaPreco">Tabela de precos</label>
+                            <select id="campoTabelaPreco">
+                                <option value="">Nenhuma (usa o preco padrao dos produtos)</option>
+                            </select>
+
+                            <label for="campoVendedorResponsavel">Vendedor responsavel</label>
+                            <select id="campoVendedorResponsavel">
+                                <option value="">Nenhum</option>
+                            </select>
+                        </div>
+
+                        <div id="camposVendedor" style="display:none;">
+                            <label for="campoLimiteDesconto">Limite de desconto (%)</label>
+                            <input type="number" id="campoLimiteDesconto" min="0" max="100" step="0.5" value="0">
+                        </div>
 
                         <div class="botoes">
                             <button type="submit" id="btnSalvar">Salvar</button>
@@ -129,41 +160,249 @@
 
                 <section class="card">
                     <h2>Usuarios cadastrados</h2>
+                    <div class="tabela-scroll">
                     <table id="tabelaUsuarios">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Nome</th>
-                                <th>E-mail</th>
-                                <th>Perfil</th>
-                                <th>Status</th>
-                                <th>Acoes</th>
+                                <th>ID</th><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Acoes</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- preenchido via JavaScript -->
-                        </tbody>
+                        <tbody></tbody>
                     </table>
+                    </div>
                 </section>
             </div>
 
-            <!-- ============ PAINEL DOS DEMAIS PERFIS ============ -->
-            <div id="painelNaoAdmin" style="display:none;">
+            <!-- ============ CATEGORIAS (RF03) - somente Admin ============ -->
+            <div id="secaoCategorias" class="secao-conteudo" style="display:none;">
                 <section class="card">
-                    <h2>Painel do usuario</h2>
-                    <p>
-                        Bem-vindo! Seu perfil ainda nao possui telas proprias nesta sprint
-                        &mdash; elas serao implementadas nas proximas sprints, conforme os
-                        demais requisitos (RF03 em diante).
-                    </p>
-                    <p class="ajuda">
-                        A "Gestao de usuarios" e restrita ao perfil Administrador. O botao
-                        abaixo tenta acessar essa area mesmo assim, so para demonstrar que o
-                        backend bloqueia o acesso de quem nao tem permissao
-                        (criterio de aceite 2 do RF02).
-                    </p>
-                    <button id="btnTestarAcessoRestrito">Testar acesso a "Gestao de usuarios"</button>
-                    <p id="mensagemTesteAcesso" class="mensagem"></p>
+                    <h2 id="tituloFormCategoria">Nova categoria</h2>
+                    <form id="formCategoria">
+                        <input type="hidden" id="categoriaId">
+                        <label for="categoriaNome">Nome</label>
+                        <input type="text" id="categoriaNome" required>
+                        <div class="botoes">
+                            <button type="submit">Salvar</button>
+                            <button type="button" id="btnCancelarCategoria" style="display:none;">Cancelar edicao</button>
+                        </div>
+                    </form>
+                    <p id="mensagemCategoria" class="mensagem"></p>
+                </section>
+                <section class="card">
+                    <h2>Categorias cadastradas</h2>
+                    <div class="tabela-scroll">
+                    <table id="tabelaCategorias">
+                        <thead><tr><th>ID</th><th>Nome</th><th>Acoes</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ============ PRODUTOS (RF04/RF05) - somente Admin ============ -->
+            <div id="secaoProdutos" class="secao-conteudo" style="display:none;">
+                <section class="card">
+                    <h2 id="tituloFormProduto">Novo produto</h2>
+                    <form id="formProduto">
+                        <input type="hidden" id="produtoId">
+
+                        <label for="produtoNome">Nome</label>
+                        <input type="text" id="produtoNome" required>
+
+                        <label for="produtoCategoria">Categoria</label>
+                        <select id="produtoCategoria" required><option value="">Selecione...</option></select>
+
+                        <label for="produtoUnidade">Unidade de venda</label>
+                        <input type="text" id="produtoUnidade" placeholder="Ex.: Caixa, Fardo, Unidade" required>
+
+                        <label for="produtoPreco">Preco padrao (R$)</label>
+                        <input type="number" id="produtoPreco" min="0.01" step="0.01" required>
+
+                        <label for="produtoEstoque">Quantidade em estoque</label>
+                        <input type="number" id="produtoEstoque" min="0" step="1" required>
+
+                        <label for="produtoEstoqueMinimo">Estoque minimo (alerta)</label>
+                        <input type="number" id="produtoEstoqueMinimo" min="0" step="1" value="0">
+
+                        <label class="checkbox-linha">
+                            <input type="checkbox" id="produtoDestaque"> Produto em destaque (aparece nas sugestoes do cliente)
+                        </label>
+
+                        <div class="botoes">
+                            <button type="submit">Salvar</button>
+                            <button type="button" id="btnCancelarProduto" style="display:none;">Cancelar edicao</button>
+                        </div>
+                    </form>
+                    <p id="mensagemProduto" class="mensagem"></p>
+                </section>
+                <section class="card">
+                    <h2>Produtos cadastrados</h2>
+                    <div class="tabela-scroll">
+                    <table id="tabelaProdutos">
+                        <thead>
+                            <tr>
+                                <th>ID</th><th>Nome</th><th>Categoria</th><th>Preco</th>
+                                <th>Estoque</th><th>Reservado</th><th>Disponivel</th><th>Status</th><th>Acoes</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ============ TABELAS DE PRECOS (RF06) - somente Admin ============ -->
+            <div id="secaoTabelasPrecos" class="secao-conteudo" style="display:none;">
+                <section class="card">
+                    <h2>Nova tabela de precos</h2>
+                    <form id="formTabelaPreco">
+                        <label for="tabelaPrecoNome">Nome</label>
+                        <input type="text" id="tabelaPrecoNome" required>
+                        <button type="submit">Criar tabela</button>
+                    </form>
+                    <p id="mensagemTabelaPreco" class="mensagem"></p>
+                </section>
+                <section class="card">
+                    <h2>Tabelas cadastradas</h2>
+                    <div class="tabela-scroll">
+                    <table id="tabelaTabelasPrecos">
+                        <thead><tr><th>ID</th><th>Nome</th><th>Itens com preco definido</th><th>Acoes</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                    </div>
+                </section>
+                <section class="card" id="cardItensTabelaPreco" style="display:none;">
+                    <h2>Precos da tabela: <span id="nomeTabelaPrecoSelecionada"></span></h2>
+                    <form id="formItemTabelaPreco">
+                        <label for="itemTabelaProduto">Produto</label>
+                        <select id="itemTabelaProduto" required><option value="">Selecione...</option></select>
+                        <label for="itemTabelaPreco">Preco (R$)</label>
+                        <input type="number" id="itemTabelaPreco" min="0.01" step="0.01" required>
+                        <button type="submit">Definir preco</button>
+                    </form>
+                    <p id="mensagemItemTabelaPreco" class="mensagem"></p>
+                    <div class="tabela-scroll">
+                    <table id="tabelaItensTabelaPreco">
+                        <thead><tr><th>Produto</th><th>Preco nesta tabela</th><th>Acoes</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ============ CATALOGO E CARRINHO (RF07/RF08/RF09/RF10/RF13/RF16) ============ -->
+            <div id="secaoCatalogo" class="secao-conteudo" style="display:none;">
+
+                <section class="card" id="cardSelecionarCliente" style="display:none;">
+                    <h2>Montar pedido para um cliente</h2>
+                    <label for="selecionarCliente">Cliente</label>
+                    <select id="selecionarCliente"><option value="">Selecione um cliente da sua base...</option></select>
+
+                    <label for="descontoVendedor">Desconto a aplicar no pedido (%)</label>
+                    <input type="number" id="descontoVendedor" min="0" step="0.5" value="0">
+                    <p class="ajuda" id="ajudaLimiteDesconto"></p>
+                </section>
+
+                <section class="card" id="cardComprarNovamente" style="display:none;">
+                    <h2>Comprar novamente</h2>
+                    <p class="ajuda">Produtos que voce ja comprou, com a quantidade da ultima compra.</p>
+                    <div id="listaComprarNovamente" class="lista-cartoes"></div>
+                </section>
+
+                <section class="card">
+                    <h2>Catalogo</h2>
+                    <p id="mensagemPedidoMinimo" class="ajuda"></p>
+                    <div id="listaCatalogo" class="lista-cartoes"></div>
+                </section>
+
+                <section class="card" id="cardSugestoes" style="display:none;">
+                    <h2>Sugestoes para completar o pedido minimo</h2>
+                    <div id="listaSugestoes" class="lista-cartoes"></div>
+                </section>
+
+                <section class="card">
+                    <h2>Carrinho</h2>
+                    <div class="tabela-scroll">
+                    <table id="tabelaCarrinho">
+                        <thead><tr><th>Produto</th><th>Preco unit.</th><th>Qtd.</th><th>Subtotal</th><th></th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                    </div>
+                    <p><strong>Total: R$ <span id="totalCarrinho">0,00</span></strong></p>
+                    <button type="button" id="btnFinalizarPedido">Finalizar pedido</button>
+                    <p id="mensagemCarrinho" class="mensagem"></p>
+                </section>
+            </div>
+
+            <!-- ============ PEDIDOS (RF08 a RF14) - todos os perfis, conteudo adaptado por JS ============ -->
+            <div id="secaoPedidos" class="secao-conteudo" style="display:none;">
+                <section class="card">
+                    <h2>Pedidos</h2>
+                    <div class="filtros" id="filtrosStatusPedido"></div>
+                    <div class="tabela-scroll">
+                    <table id="tabelaPedidos">
+                        <thead>
+                            <tr><th>ID</th><th>Cliente</th><th>Vendedor</th><th>Status</th><th>Valor total</th><th>Criado em</th><th>Acoes</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    </div>
+                </section>
+
+                <section class="card" id="cardDetalhePedido" style="display:none;">
+                    <h2>Pedido #<span id="detalhePedidoId"></span></h2>
+                    <div id="detalhePedidoConteudo"></div>
+                </section>
+            </div>
+
+            <!-- ============ DASHBOARD (RF15) - Admin e Vendedor ============ -->
+            <div id="secaoDashboard" class="secao-conteudo" style="display:none;">
+                <section class="card">
+                    <h2>Dashboard</h2>
+                    <div class="filtros" id="filtrosPeriodoDashboard">
+                        <button type="button" class="filtro-btn" data-periodo="hoje">Hoje</button>
+                        <button type="button" class="filtro-btn" data-periodo="7dias">Ultimos 7 dias</button>
+                        <button type="button" class="filtro-btn" data-periodo="mes">Este mes</button>
+                        <span class="filtro-personalizado">
+                            <input type="date" id="dashboardDataInicio">
+                            <input type="date" id="dashboardDataFim">
+                            <button type="button" id="btnPeriodoPersonalizado">Aplicar</button>
+                        </span>
+                    </div>
+
+                    <div class="cartoes-indicadores">
+                        <div class="indicador"><span class="indicador-valor" id="indTotalPedidos">-</span><span class="indicador-label">Pedidos no periodo</span></div>
+                        <div class="indicador"><span class="indicador-valor" id="indFaturamento">-</span><span class="indicador-label">Faturamento</span></div>
+                        <div class="indicador"><span class="indicador-valor" id="indTicketMedio">-</span><span class="indicador-label">Ticket medio</span></div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>Pedidos por status</h2>
+                    <div class="tabela-scroll">
+                    <table id="tabelaStatusDashboard"><thead><tr><th>Status</th><th>Quantidade</th></tr></thead><tbody></tbody></table>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>Produtos mais vendidos</h2>
+                    <div class="tabela-scroll">
+                    <table id="tabelaMaisVendidos"><thead><tr><th>Produto</th><th>Quantidade vendida</th></tr></thead><tbody></tbody></table>
+                    </div>
+                </section>
+
+                <section class="card" id="cardEstoqueBaixoDashboard" style="display:none;">
+                    <h2>Produtos com estoque baixo</h2>
+                    <div class="tabela-scroll">
+                    <table id="tabelaEstoqueBaixoDashboard"><thead><tr><th>Produto</th><th>Disponivel</th><th>Minimo</th></tr></thead><tbody></tbody></table>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>Clientes sem comprar ha muito tempo</h2>
+                    <div class="tabela-scroll">
+                    <table id="tabelaClientesInativos"><thead><tr><th>Cliente</th><th>Ultima compra</th></tr></thead><tbody></tbody></table>
+                    </div>
                 </section>
             </div>
 
@@ -171,5 +410,9 @@
     </main>
 
     <script src="script.js"></script>
+    <script src="produtos.js"></script>
+    <script src="catalogo.js"></script>
+    <script src="pedidos.js"></script>
+    <script src="dashboard.js"></script>
 </body>
 </html>

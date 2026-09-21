@@ -64,9 +64,17 @@ public class AutenticacaoInterceptor implements HandlerInterceptor {
 
         Usuario usuarioLogado = usuarioOpt.get();
 
-        // Regra 1 e 2: somente ROLE_ADMIN pode gerenciar usuarios e perfis
+        // Regra 1 e 2: somente ROLE_ADMIN pode gerenciar usuarios, perfis, categorias,
+        // produtos e tabelas de precos. GET em "/api/configuracoes" fica liberado para
+        // qualquer perfil logado (o Cliente precisa saber o pedido minimo vigente);
+        // apenas a alteracao (PUT) e exclusiva do Administrador.
         String caminho = request.getRequestURI();
-        boolean rotaAdministrativa = caminho.startsWith("/api/usuarios") || caminho.startsWith("/api/roles");
+        boolean rotaAdministrativa = caminho.startsWith("/api/usuarios")
+                || caminho.startsWith("/api/roles")
+                || caminho.startsWith("/api/categorias")
+                || caminho.startsWith("/api/produtos")
+                || caminho.startsWith("/api/tabelas-precos")
+                || (caminho.startsWith("/api/configuracoes") && !"GET".equalsIgnoreCase(request.getMethod()));
 
         if (rotaAdministrativa && !"ROLE_ADMIN".equals(usuarioLogado.getRole().getNome())) {
             responderErro(response, 403, "Acesso negado: seu perfil nao tem permissao para esta funcionalidade.");

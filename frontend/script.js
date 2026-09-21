@@ -1,7 +1,9 @@
-// URLs base da API do backend (Spring Boot)
-const API_URL = "http://localhost:8080/api/usuarios";
-const ROLES_URL = "http://localhost:8080/api/roles";
-const AUTH_URL = "http://localhost:8080/api/auth";
+// URLs base da API do backend (Spring Boot).
+// API_BASE e usada pelos demais arquivos (produtos.js, catalogo.js, pedidos.js, dashboard.js).
+const API_BASE = "http://localhost:8080/api";
+const API_URL = `${API_BASE}/usuarios`;
+const ROLES_URL = `${API_BASE}/roles`;
+const AUTH_URL = `${API_BASE}/auth`;
 
 // ==================== ELEMENTOS - LOGIN / SESSAO ====================
 const secaoLogin = document.getElementById("secaoLogin");
@@ -20,12 +22,9 @@ const passoSolicitarCodigo = document.getElementById("passoSolicitarCodigo");
 const passoDefinirNovaSenha = document.getElementById("passoDefinirNovaSenha");
 const formSolicitarCodigo = document.getElementById("formSolicitarCodigo");
 const formDefinirNovaSenha = document.getElementById("formDefinirNovaSenha");
+const btnEnviarCodigo = document.getElementById("btnEnviarCodigo");
+const btnRedefinirSenha = document.getElementById("btnRedefinirSenha");
 const mensagemRedefinirSenha = document.getElementById("mensagemRedefinirSenha");
-
-const painelAdmin = document.getElementById("painelAdmin");
-const painelNaoAdmin = document.getElementById("painelNaoAdmin");
-const btnTestarAcessoRestrito = document.getElementById("btnTestarAcessoRestrito");
-const mensagemTesteAcesso = document.getElementById("mensagemTesteAcesso");
 
 // ==================== ELEMENTOS - GESTAO DE USUARIOS (admin) ====================
 const formUsuario = document.getElementById("formUsuario");
@@ -39,6 +38,16 @@ const btnCancelar = document.getElementById("btnCancelar");
 const mensagemFormulario = document.getElementById("mensagemFormulario");
 const tabelaUsuariosBody = document.querySelector("#tabelaUsuarios tbody");
 
+// RF06/RF10 - campos condicionais conforme o perfil escolhido
+const camposCliente = document.getElementById("camposCliente");
+const camposVendedor = document.getElementById("camposVendedor");
+const campoTabelaPreco = document.getElementById("campoTabelaPreco");
+const campoVendedorResponsavel = document.getElementById("campoVendedorResponsavel");
+const campoLimiteDesconto = document.getElementById("campoLimiteDesconto");
+
+let perfisCarregados = [];
+let usuariosCarregados = [];
+
 // Nomes amigaveis para os perfis padrao (ROLE_ADMIN, ROLE_VENDEDOR, ...).
 const NOME_AMIGAVEL_PERFIL = {
     ROLE_ADMIN: "Administrador",
@@ -51,6 +60,41 @@ function nomeAmigavelPerfil(perfil) {
     if (!perfil) return "-";
     return NOME_AMIGAVEL_PERFIL[perfil.nome] || perfil.nome;
 }
+
+// ==================== NAVEGACAO ENTRE SECOES ====================
+// Cada perfil so enxerga os botoes de navegacao relevantes para ele.
+const NAV_POR_PERFIL = {
+    ROLE_ADMIN: ["navUsuarios", "navCategorias", "navProdutos", "navTabelasPrecos", "navPedidos", "navDashboard"],
+    ROLE_VENDEDOR: ["navCatalogo", "navPedidos", "navDashboard"],
+    ROLE_CLIENTE: ["navCatalogo", "navPedidos"],
+    ROLE_EXPEDICAO: ["navPedidos"]
+};
+
+const TODAS_SECOES = [
+    "secaoUsuarios", "secaoCategorias", "secaoProdutos",
+    "secaoTabelasPrecos", "secaoCatalogo", "secaoPedidos", "secaoDashboard"
+];
+
+// Ao abrir uma secao, dispara um callback opcional registrado pelo arquivo JS
+// responsavel por ela (ex.: window.aoAbrir_secaoCatalogo definido em catalogo.js).
+// Isso evita que este arquivo precise conhecer os detalhes dos outros modulos.
+function mostrarSecao(nomeSecao) {
+    TODAS_SECOES.forEach((id) => {
+        document.getElementById(id).style.display = id === nomeSecao ? "block" : "none";
+    });
+    document.querySelectorAll(".nav-btn").forEach((botao) => {
+        botao.classList.toggle("ativo", botao.dataset.secao === nomeSecao);
+    });
+
+    const callback = window[`aoAbrir_${nomeSecao}`];
+    if (typeof callback === "function") {
+        callback();
+    }
+}
+
+document.querySelectorAll(".nav-btn").forEach((botao) => {
+    botao.addEventListener("click", () => mostrarSecao(botao.dataset.secao));
+});
 
 // ==================== SESSAO (token guardado no navegador) ====================
 // Guardamos o token no localStorage so para o usuario nao precisar logar
@@ -126,13 +170,22 @@ function entrarNaAreaLogada(usuario) {
     nomeUsuarioLogado.textContent = usuario.nome;
     perfilUsuarioLogado.textContent = nomeAmigavelPerfil(usuario.perfil);
 
-    const ehAdmin = usuario.perfil && usuario.perfil.nome === "ROLE_ADMIN";
-    painelAdmin.style.display = ehAdmin ? "block" : "none";
-    painelNaoAdmin.style.display = ehAdmin ? "none" : "block";
+    const perfil = usuario.perfil ? usuario.perfil.nome : null;
+    const navsPermitidos = NAV_POR_PERFIL[perfil] || [];
 
-    if (ehAdmin) {
+    document.querySelectorAll(".nav-btn").forEach((botao) => {
+        botao.style.display = navsPermitidos.includes(botao.id) ? "inline-block" : "none";
+    });
+
+    if (perfil === "ROLE_ADMIN") {
         carregarPerfis();
         carregarUsuarios();
+        carregarTabelasPrecoParaFormulario();
+    }
+
+    const primeiroNav = navsPermitidos.length > 0 ? document.getElementById(navsPermitidos[0]) : null;
+    if (primeiroNav) {
+        mostrarSecao(primeiroNav.dataset.secao);
     }
 }
 
@@ -214,6 +267,13 @@ formSolicitarCodigo.addEventListener("submit", async (evento) => {
 
     const email = document.getElementById("emailRedefinicao").value;
 
+    // Desabilita o botao assim que o clique acontece: o envio do e-mail
+    // (SMTP) pode demorar alguns segundos, e sem isso um clique duplo do
+    // usuario dispara duas (ou mais) requisicoes, gerando varios e-mails.
+    const textoOriginal = btnEnviarCodigo.textContent;
+    btnEnviarCodigo.disabled = true;
+    btnEnviarCodigo.textContent = "Enviando...";
+
     try {
         const resposta = await fetch(`${AUTH_URL}/esqueci-senha`, {
             method: "POST",
@@ -237,6 +297,11 @@ formSolicitarCodigo.addEventListener("submit", async (evento) => {
     } catch (erro) {
         console.error("Erro ao solicitar codigo de redefinicao:", erro);
         exibirMensagem(mensagemRedefinirSenha, "Nao foi possivel conectar ao backend.", "erro");
+    } finally {
+        // Reabilita o botao tanto no sucesso quanto no erro - se der
+        // erro, o usuario pode querer tentar de novo.
+        btnEnviarCodigo.disabled = false;
+        btnEnviarCodigo.textContent = textoOriginal;
     }
 });
 
@@ -244,10 +309,24 @@ formSolicitarCodigo.addEventListener("submit", async (evento) => {
 formDefinirNovaSenha.addEventListener("submit", async (evento) => {
     evento.preventDefault();
 
+    const novaSenha = document.getElementById("novaSenhaRedefinicao").value;
+    const confirmarNovaSenha = document.getElementById("confirmarNovaSenhaRedefinicao").value;
+
+    // Validacao no proprio navegador: evita uma chamada desnecessaria ao
+    // backend quando as duas senhas nao coincidem.
+    if (novaSenha !== confirmarNovaSenha) {
+        exibirMensagem(mensagemRedefinirSenha, "As senhas informadas nao coincidem.", "erro");
+        return;
+    }
+
     const corpo = {
         token: document.getElementById("codigoRedefinicao").value.trim(),
-        novaSenha: document.getElementById("novaSenhaRedefinicao").value
+        novaSenha: novaSenha
     };
+
+    const textoOriginal = btnRedefinirSenha.textContent;
+    btnRedefinirSenha.disabled = true;
+    btnRedefinirSenha.textContent = "Redefinindo...";
 
     try {
         const resposta = await fetch(`${AUTH_URL}/redefinir-senha`, {
@@ -277,27 +356,9 @@ formDefinirNovaSenha.addEventListener("submit", async (evento) => {
     } catch (erro) {
         console.error("Erro ao redefinir senha:", erro);
         exibirMensagem(mensagemRedefinirSenha, "Nao foi possivel conectar ao backend.", "erro");
-    }
-});
-
-// ==================== TESTE DE ACESSO RESTRITO (perfis nao-admin) ====================
-
-btnTestarAcessoRestrito.addEventListener("click", async () => {
-    try {
-        const resposta = await fetch(API_URL, { headers: cabecalhosAutenticados() });
-        const dados = await resposta.json();
-
-        if (!resposta.ok) {
-            exibirMensagem(
-                mensagemTesteAcesso,
-                `Bloqueado como esperado (HTTP ${resposta.status}): ${dados.mensagem}`,
-                "erro"
-            );
-        } else {
-            exibirMensagem(mensagemTesteAcesso, "Acesso permitido (nao deveria acontecer).", "sucesso");
-        }
-    } catch (erro) {
-        console.error("Erro ao testar acesso restrito:", erro);
+    } finally {
+        btnRedefinirSenha.disabled = false;
+        btnRedefinirSenha.textContent = textoOriginal;
     }
 });
 
@@ -306,10 +367,10 @@ btnTestarAcessoRestrito.addEventListener("click", async () => {
 async function carregarPerfis() {
     try {
         const resposta = await fetch(ROLES_URL, { headers: cabecalhosAutenticados() });
-        const perfis = await resposta.json();
+        perfisCarregados = await resposta.json();
 
         perfilInput.innerHTML = '<option value="">Selecione...</option>';
-        perfis.forEach((perfil) => {
+        perfisCarregados.forEach((perfil) => {
             const opcao = document.createElement("option");
             opcao.value = perfil.id;
             opcao.textContent = nomeAmigavelPerfil(perfil);
@@ -319,6 +380,47 @@ async function carregarPerfis() {
         console.error("Erro ao carregar perfis:", erro);
         exibirMensagem(mensagemFormulario, "Nao foi possivel carregar os perfis de acesso.", "erro");
     }
+}
+
+// RF06/RF10 - mostra "Tabela de precos"/"Vendedor responsavel" so para perfil
+// Cliente, e "Limite de desconto" so para perfil Vendedor.
+function atualizarCamposCondicionais() {
+    const perfilSelecionado = perfisCarregados.find((p) => String(p.id) === perfilInput.value);
+    const nomePerfil = perfilSelecionado ? perfilSelecionado.nome : null;
+
+    camposCliente.style.display = nomePerfil === "ROLE_CLIENTE" ? "block" : "none";
+    camposVendedor.style.display = nomePerfil === "ROLE_VENDEDOR" ? "block" : "none";
+}
+
+perfilInput.addEventListener("change", atualizarCamposCondicionais);
+
+async function carregarTabelasPrecoParaFormulario() {
+    try {
+        const resposta = await fetch(`${API_BASE}/tabelas-precos`, { headers: cabecalhosAutenticados() });
+        const tabelas = await resposta.json();
+
+        campoTabelaPreco.innerHTML = '<option value="">Nenhuma (usa o preco padrao dos produtos)</option>';
+        tabelas.forEach((tabela) => {
+            const opcao = document.createElement("option");
+            opcao.value = tabela.id;
+            opcao.textContent = tabela.nome;
+            campoTabelaPreco.appendChild(opcao);
+        });
+    } catch (erro) {
+        console.error("Erro ao carregar tabelas de precos:", erro);
+    }
+}
+
+function preencherDropdownVendedores() {
+    campoVendedorResponsavel.innerHTML = '<option value="">Nenhum</option>';
+    usuariosCarregados
+        .filter((usuario) => usuario.perfil && usuario.perfil.nome === "ROLE_VENDEDOR")
+        .forEach((vendedor) => {
+            const opcao = document.createElement("option");
+            opcao.value = vendedor.id;
+            opcao.textContent = vendedor.nome;
+            campoVendedorResponsavel.appendChild(opcao);
+        });
 }
 
 // ==================== LISTAGEM DE USUARIOS ====================
@@ -333,8 +435,9 @@ async function carregarUsuarios() {
             return;
         }
 
-        const usuarios = await resposta.json();
-        renderizarTabela(usuarios);
+        usuariosCarregados = await resposta.json();
+        renderizarTabela(usuariosCarregados);
+        preencherDropdownVendedores();
     } catch (erro) {
         console.error("Erro ao carregar usuarios:", erro);
         exibirMensagem(mensagemFormulario, "Nao foi possivel conectar ao backend.", "erro");
@@ -378,7 +481,10 @@ formUsuario.addEventListener("submit", async (evento) => {
         nome: nomeInput.value,
         email: emailInput.value,
         senha: senhaInput.value,
-        perfil: { id: Number(perfilInput.value) }
+        perfil: { id: Number(perfilInput.value) },
+        tabelaPrecoId: campoTabelaPreco.value ? Number(campoTabelaPreco.value) : null,
+        vendedorResponsavelId: campoVendedorResponsavel.value ? Number(campoVendedorResponsavel.value) : null,
+        limiteDescontoPercentual: campoLimiteDesconto.value ? Number(campoLimiteDesconto.value) : 0
     };
 
     const editando = Boolean(id);
@@ -425,6 +531,10 @@ async function editarUsuario(id) {
         senhaInput.value = "";
         senhaInput.placeholder = "Deixe em branco para manter a senha atual";
         perfilInput.value = usuario.perfil ? usuario.perfil.id : "";
+        campoTabelaPreco.value = usuario.tabelaPrecoId || "";
+        campoVendedorResponsavel.value = usuario.vendedorResponsavel ? usuario.vendedorResponsavel.id : "";
+        campoLimiteDesconto.value = usuario.limiteDescontoPercentual || 0;
+        atualizarCamposCondicionais();
 
         tituloFormulario.textContent = `Editando usuario #${usuario.id}`;
         btnCancelar.style.display = "inline-block";
@@ -442,6 +552,8 @@ function limparFormulario() {
     senhaInput.placeholder = "Obrigatorio no cadastro";
     tituloFormulario.textContent = "Cadastrar usuario";
     btnCancelar.style.display = "none";
+    camposCliente.style.display = "none";
+    camposVendedor.style.display = "none";
 }
 
 // ==================== ATIVAR / INATIVAR ====================
@@ -467,9 +579,32 @@ async function alterarStatus(id, acao) {
     }
 }
 
-// ==================== UTIL ====================
+// ==================== UTIL (compartilhado com os outros arquivos JS) ====================
 
 function exibirMensagem(elemento, texto, tipo) {
     elemento.textContent = texto;
     elemento.className = `mensagem ${tipo}`;
+}
+
+function formatarMoeda(valor) {
+    const numero = Number(valor || 0);
+    return numero.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Escapa um texto para ser usado com seguranca dentro de um atributo
+// onclick="..." que, por sua vez, usa aspas simples para os argumentos de
+// string (ex.: nomes de produtos/tabelas digitados pelo usuario).
+function escAtributoOnclick(texto) {
+    return String(texto)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+function formatarDataHora(isoString) {
+    if (!isoString) return "-";
+    const data = new Date(isoString);
+    return data.toLocaleString("pt-BR");
 }
