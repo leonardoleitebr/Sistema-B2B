@@ -179,7 +179,7 @@ function montarAcoesPedido(pedido, perfil) {
 }
 
 async function executarAcaoPedido(id, acao) {
-    if (acao === "cancelar" && !confirm("Confirma o cancelamento deste pedido?")) return;
+    if (acao === "cancelar" && !(await confirmarPersonalizado("Confirma o cancelamento deste pedido?"))) return;
 
     try {
         const resposta = await fetch(`${API_BASE}/pedidos/${id}/${acao}`, {
@@ -189,7 +189,7 @@ async function executarAcaoPedido(id, acao) {
         const dados = await resposta.json();
 
         if (!resposta.ok) {
-            alert(dados.mensagem || "Nao foi possivel executar a acao.");
+            await alertaPersonalizado(dados.mensagem || "Nao foi possivel executar a acao.");
             return;
         }
 
@@ -197,12 +197,13 @@ async function executarAcaoPedido(id, acao) {
         abrirDetalhePedido(id);
     } catch (erro) {
         console.error(`Erro ao executar a acao "${acao}" no pedido:`, erro);
+        await alertaPersonalizado("Nao foi possivel concluir a acao. Tente novamente.");
     }
 }
 
 // RF14 - Expedicao registra uma divergencia encontrada na separacao
-function abrirFormDivergencia(id) {
-    const descricao = prompt("Descreva a divergencia encontrada (ex.: falta de produto, quantidade incorreta, avaria):");
+async function abrirFormDivergencia(id) {
+    const descricao = await promptPersonalizado("Descreva a divergencia encontrada (ex.: falta de produto, quantidade incorreta, avaria):");
     if (!descricao) return;
     registrarDivergencia(id, descricao);
 }
@@ -217,7 +218,7 @@ async function registrarDivergencia(id, descricao) {
         const dados = await resposta.json();
 
         if (!resposta.ok) {
-            alert(dados.mensagem || "Nao foi possivel registrar a divergencia.");
+            await alertaPersonalizado(dados.mensagem || "Nao foi possivel registrar a divergencia.");
             return;
         }
 
@@ -225,6 +226,7 @@ async function registrarDivergencia(id, descricao) {
         abrirDetalhePedido(id);
     } catch (erro) {
         console.error("Erro ao registrar divergencia:", erro);
+        await alertaPersonalizado("Nao foi possivel concluir a acao. Tente novamente.");
     }
 }
 

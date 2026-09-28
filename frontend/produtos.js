@@ -95,7 +95,7 @@ function limparFormularioCategoria() {
 }
 
 async function removerCategoria(id) {
-    if (!confirm("Remover esta categoria? So e possivel se nao houver produtos vinculados.")) return;
+    if (!(await confirmarPersonalizado("Remover esta categoria? So e possivel se nao houver produtos vinculados."))) return;
     try {
         const resposta = await fetch(`${API_BASE}/categorias/${id}`, {
             method: "DELETE",
@@ -234,7 +234,7 @@ async function ativarProduto(id) {
 }
 
 async function inativarProduto(id) {
-    if (!confirm("Inativar este produto? Ele deixara de aparecer no catalogo.")) return;
+    if (!(await confirmarPersonalizado("Inativar este produto? Ele deixara de aparecer no catalogo."))) return;
     await alterarStatusProduto(id, "inativar");
 }
 
@@ -320,7 +320,7 @@ formTabelaPreco.addEventListener("submit", async (evento) => {
 });
 
 async function removerTabelaPreco(id) {
-    if (!confirm("Remover esta tabela de precos? So e possivel se nao houver clientes vinculados.")) return;
+    if (!(await confirmarPersonalizado("Remover esta tabela de precos? So e possivel se nao houver clientes vinculados."))) return;
     try {
         const resposta = await fetch(`${API_BASE}/tabelas-precos/${id}`, {
             method: "DELETE",

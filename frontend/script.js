@@ -253,6 +253,8 @@ linkEsqueciSenha.addEventListener("click", (evento) => {
     mensagemRedefinirSenha.textContent = "";
     formSolicitarCodigo.reset();
     formDefinirNovaSenha.reset();
+    indicadorForcaSenha.textContent = "";
+    indicadorForcaSenha.className = "forca-senha";
 });
 
 linkVoltarLogin.addEventListener("click", (evento) => {
@@ -306,11 +308,47 @@ formSolicitarCodigo.addEventListener("submit", async (evento) => {
 });
 
 // Passo 2: usuario informa o codigo recebido e a nova senha (a sua escolha)
+
+// RF02 - forca da senha calculada em tempo real (min. 8 caracteres)
+const novaSenhaRedefinicaoInput = document.getElementById("novaSenhaRedefinicao");
+const indicadorForcaSenha = document.getElementById("indicadorForcaSenha");
+
+function calcularForcaSenha(senha) {
+    if (senha.length < 8) return "fraca";
+    let variedade = 0;
+    if (/[a-z]/.test(senha)) variedade++;
+    if (/[A-Z]/.test(senha)) variedade++;
+    if (/[0-9]/.test(senha)) variedade++;
+    if (/[^A-Za-z0-9]/.test(senha)) variedade++;
+    if (senha.length >= 12 && variedade >= 3) return "forte";
+    if (variedade >= 2) return "media";
+    return "fraca";
+}
+
+const TEXTO_FORCA_SENHA = { fraca: "Senha fraca", media: "Senha media", forte: "Senha forte" };
+
+novaSenhaRedefinicaoInput.addEventListener("input", () => {
+    const senha = novaSenhaRedefinicaoInput.value;
+    if (!senha) {
+        indicadorForcaSenha.textContent = "";
+        indicadorForcaSenha.className = "forca-senha";
+        return;
+    }
+    const forca = calcularForcaSenha(senha);
+    indicadorForcaSenha.textContent = TEXTO_FORCA_SENHA[forca];
+    indicadorForcaSenha.className = `forca-senha forca-${forca}`;
+});
+
 formDefinirNovaSenha.addEventListener("submit", async (evento) => {
     evento.preventDefault();
 
     const novaSenha = document.getElementById("novaSenhaRedefinicao").value;
     const confirmarNovaSenha = document.getElementById("confirmarNovaSenhaRedefinicao").value;
+
+    if (novaSenha.length < 8) {
+        exibirMensagem(mensagemRedefinirSenha, "A nova senha precisa ter no minimo 8 caracteres.", "erro");
+        return;
+    }
 
     // Validacao no proprio navegador: evita uma chamada desnecessaria ao
     // backend quando as duas senhas nao coincidem.
@@ -559,7 +597,7 @@ function limparFormulario() {
 // ==================== ATIVAR / INATIVAR ====================
 
 async function inativarUsuario(id) {
-    if (!confirm("Deseja realmente inativar este usuario?")) return;
+    if (!(await confirmarPersonalizado("Deseja realmente inativar este usuario?"))) return;
     await alterarStatus(id, "inativar");
 }
 
@@ -607,4 +645,60 @@ function formatarDataHora(isoString) {
     if (!isoString) return "-";
     const data = new Date(isoString);
     return data.toLocaleString("pt-BR");
+}
+
+// ==================== MODAL PERSONALIZADO ====================
+// Substitui confirm()/alert()/prompt() nativos do navegador: eles sempre
+// exibem o endereco/porta de quem esta servindo a pagina (ex.: "127.0.0.1:5500
+// diz"), o que nao queremos mostrar ao usuario. Cada funcao devolve uma
+// Promise, entao os pontos de uso precisam de "await".
+
+const modalPersonalizado = document.getElementById("modalPersonalizado");
+const modalMensagem = document.getElementById("modalMensagem");
+const modalInputTexto = document.getElementById("modalInputTexto");
+const modalBtnConfirmar = document.getElementById("modalBtnConfirmar");
+const modalBtnCancelar = document.getElementById("modalBtnCancelar");
+
+function abrirModal({ mensagem, comInput = false, valorInicial = "", somenteOk = false }) {
+    return new Promise((resolve) => {
+        modalMensagem.textContent = mensagem;
+        modalInputTexto.style.display = comInput ? "block" : "none";
+        modalInputTexto.value = valorInicial;
+        modalBtnCancelar.style.display = somenteOk ? "none" : "inline-block";
+        modalPersonalizado.style.display = "flex";
+        if (comInput) modalInputTexto.focus();
+
+        function limpar() {
+            modalPersonalizado.style.display = "none";
+            modalBtnConfirmar.removeEventListener("click", aoConfirmar);
+            modalBtnCancelar.removeEventListener("click", aoCancelar);
+        }
+        function aoConfirmar() {
+            const resultado = comInput ? modalInputTexto.value.trim() : true;
+            limpar();
+            resolve(resultado);
+        }
+        function aoCancelar() {
+            limpar();
+            resolve(comInput ? null : false);
+        }
+
+        modalBtnConfirmar.addEventListener("click", aoConfirmar);
+        modalBtnCancelar.addEventListener("click", aoCancelar);
+    });
+}
+
+// Substitui confirm(mensagem) -> Promise<boolean>
+function confirmarPersonalizado(mensagem) {
+    return abrirModal({ mensagem });
+}
+
+// Substitui alert(mensagem) -> Promise<void>
+function alertaPersonalizado(mensagem) {
+    return abrirModal({ mensagem, somenteOk: true });
+}
+
+// Substitui prompt(mensagem) -> Promise<string|null>
+function promptPersonalizado(mensagem, valorInicial = "") {
+    return abrirModal({ mensagem, comInput: true, valorInicial });
 }
